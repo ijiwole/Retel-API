@@ -22,13 +22,13 @@ app.use(cors());
 app.use(cookieParser());
 
 
-app.use(errorHandler);
-app.use(notFoundError)
 
 app.use("/api/user", upload.single("image"), userRouter)
 app.use("/api/product", upload2.single("image"), productRouter)
 app.use("/api/coupon", couponRouter)
 
+app.use(errorHandler);
+app.use(notFoundError)
 
 const port = process.env.PORT || 9000;
 
