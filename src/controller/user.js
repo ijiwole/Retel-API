@@ -1,7 +1,7 @@
 import UserSchema from "../models/user.js";
 import { StatusCodes } from "http-status-codes";
 import AuthRoles from "../util/authRoles.js";
-import ValidateEmail from "../util/emailValidator.js";
+import validateEmail from "../util/emailValidator.js";
 import bcyrpt from "bcryptjs";
 import sendMail from "../util/mailHelper.js";
 import generateToken from "../util/generateToken.js";
@@ -98,11 +98,10 @@ export const register = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ 
-        msg: `${err}`, 
-        status: StatusCodes.INTERNAL_SERVER_ERROR });
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      msg: `${err}`,
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+    });
   }
 };
 
@@ -211,12 +210,10 @@ export const uploadeProfilePicture = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    return res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ 
-        msg: `${err.msg}`, 
-        status: StatusCodes.INTERNAL_SERVER_ERROR 
-      });
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      msg: `${err.msg}`,
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+    });
   }
 };
 
@@ -255,12 +252,10 @@ export const resendOtp = async (req, res) => {
         "Retel",
         `Use the otp below to verify your email address ${otp}`
       );
-      res
-        .status(StatusCodes.OK)
-        .json({
-           msg: `sucessful`, 
-           status: StatusCodes.OK 
-          });
+      res.status(StatusCodes.OK).json({
+        msg: `sucessful`,
+        status: StatusCodes.OK,
+      });
     })
     .catch((err) => {
       res
@@ -271,88 +266,92 @@ export const resendOtp = async (req, res) => {
 
 //Forget Password
 export const forgetPassword = async (req, res) => {
-  const owner = UserSchema.findOne({ email: req.body.email });
-  if (!owner) {
-    return res
-      .status(StatusCodes.NOT_FOUND)
-      .json({ msg: "email not registered", status: StatusCodes.NOT_FOUND });
-  }
+  try {
+    const owner = await UserSchema.findOne({ email: req.body.email });
 
-  const otp = `${Math.floor(1000 + Math.random() * 9000)}`;
-  owner.otp = otp;
+    if (!owner) {
+      return res.status(StatusCodes.NOT_FOUND).json({ 
+        msg: "Email not registered", 
+        status: StatusCodes.NOT_FOUND 
+      });
+    }
 
-  owner.save().then(() => {
+    const otp = `${Math.floor(1000 + Math.random() * 9000)}`;
+    owner.otp = otp;
+
+    await owner.save();
+
     sendMail(
       owner.email,
       "Forget Password",
-      `Please use the otp below to reset your password ${otp}`
+      `Please use the OTP below to reset your password: ${otp}`
     );
-    res
-      .status(StatusCodes.OK)
-      .json({ msg: "email sent succesfully", status: StatusCodes.OK })
-      .catch((error) => {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-          msg: error.message,
-          status: StatusCodes.INTERNAL_SERVER_ERROR,
-        });
-      });
-  });
+
+    return res.status(StatusCodes.OK).json({ 
+      msg: "Email sent successfully", 
+      status: StatusCodes.OK 
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ 
+      msg: "Internal server error", 
+      status: StatusCodes.INTERNAL_SERVER_ERROR 
+    });
+  }
 };
 
 //Change Password
 export const changePassword = async (req, res) => {
-  const owner = await UserSchema.findOne({ otp: req.body.otp });
+  try {
+    const owner = await UserSchema.findOne({ otp: req.body.otp });
 
-  if (!owner) {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ msg: "otp is incorrect", status: StatusCodes.BAD_REQUEST });
+    if (!owner) {
+      return res.status(StatusCodes.BAD_REQUEST).json({ 
+        msg: "OTP is incorrect", 
+        status: StatusCodes.BAD_REQUEST 
+      });
+    }
+
+    // Update user password
+    const newPassword = req.body.password;
+
+    const salt = await bcyrpt.genSalt(10);
+    const hash = await bcyrpt.hash(newPassword, salt);
+
+    owner.password = hash;
+    await owner.save();
+
+    sendMail(
+      owner.email,
+      "Retel",
+      `Password reset for your account ${owner.email} has been completed`
+    );
+
+    res.status(StatusCodes.OK).json({ 
+      msg: "Password reset successful", 
+      status: StatusCodes.OK 
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ 
+      msg: "Unable to reset password", 
+      status: StatusCodes.INTERNAL_SERVER_ERROR 
+    });
   }
-  //update user docs
-  const user = await UserSchema.findByIdAndUpdate(
-    owner.id,
-    { passowrd: req.body.password },
-    { new: true }
-  );
-  bcyrpt.genSalt(10, (err, salt) =>
-    bcyrpt.hash(user.passowrd, salt, (err, hash) => {
-      if (err) throw err;
-
-      user.passowrd = hash;
-
-      user
-        .save()
-        .then((savedUser) => {
-          sendMail(
-            savedUser.email,
-            "Retel",
-            `Password reset for your account ${owner.email} has been completed`
-          );
-          res
-            .status(StatusCodes.OK)
-            .json({ msg: "password reset successful", status: StatusCodes.OK });
-        })
-        .catch((err) => {
-          res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-            msg: `${err.msg}`,
-            status: StatusCodes.INTERNAL_SERVER_ERROR,
-          });
-        });
-    })
-  );
 };
+
 
 // Login
 export const login = async (req, res) => {
   try {
-    const { email, passowrd } = req.body;
-    if (!email || !passowrd) {
+    const { email, password } = req.body;
+    if (!email || !password) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         msg: "email or password is missing",
         status: StatusCodes.BAD_REQUEST,
       });
     }
-    ValidateEmail(res, email);
+    validateEmail(res, email);
 
     const user = await UserSchema.findOne({ email }).select("+password");
 
@@ -371,7 +370,7 @@ export const login = async (req, res) => {
       });
     }
     //compare password
-    bcyrpt.compare(passowrd, user.password, (err, isMatch) => {
+    bcyrpt.compare(password, user.password, (err, isMatch) => {
       if (err) {
         console.log(err);
         return res
@@ -402,20 +401,19 @@ export const login = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    return res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ 
-        msg: err.msg, 
-        status: StatusCodes.INTERNAL_SERVER_ERROR });
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      msg: err.msg,
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+    });
   }
 };
 
 // Google Login
 export const googleLogin = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email } = req.body;
 
-    ValidateEmail(res, email);
+    validateEmail(res, email);
 
     const user = await UserSchema.findOne({ email });
 
@@ -433,7 +431,7 @@ export const googleLogin = async (req, res) => {
   } catch (error) {
     console.log(error);
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      msg: error.message,
+      msg: "Internal server error",
       status: StatusCodes.INTERNAL_SERVER_ERROR,
     });
   }
@@ -473,9 +471,7 @@ export const myProfile = async (req, res) => {
       .json({ error: "User not found" });
   }
 
-  return res
-  .status(StatusCodes.ACCEPTED)
-  .json({
+  return res.status(StatusCodes.ACCEPTED).json({
     data: owner,
     msg: "Profile fetched",
     status: StatusCodes.ACCEPTED,
@@ -483,44 +479,37 @@ export const myProfile = async (req, res) => {
 };
 
 //Edit profile
-export const editProfile = async(req, res) => {
+export const editProfile = async (req, res) => {
   const UserId = req.headers.id;
   try {
-    const owner = await UserSchema.findById(UserId)
+    const owner = await UserSchema.findById(UserId);
 
-    if(!owner){
-        return res
-        .status(StatusCodes.NOT_FOUND)
-        .json({
-          msg: "User not found",
-          status: StatusCodes.NOT_FOUND
-        });
+    if (!owner) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        msg: "User not found",
+        status: StatusCodes.NOT_FOUND,
+      });
     }
     owner.name = req.body.name ?? owner.name;
     owner.email = req.body.email ?? owner.email;
     owner.password = req.body.password ?? owner.password;
-  
-    if(req.file){
+
+    if (req.file) {
       owner.img.url = req.file.path;
       owner.img.publicId = req.file.filename;
     }
-   
-   await owner.save();
-  
-    return res
-      .status(StatusCodes.ACCEPTED)
-      .json({
-        msg: "Profile updated successfully",
-        status: StatusCodes.ACCEPTED
-      })
+
+    await owner.save();
+
+    return res.status(StatusCodes.ACCEPTED).json({
+      msg: "Profile updated successfully",
+      status: StatusCodes.ACCEPTED,
+    });
   } catch (err) {
     console.log(err);
-    return res
-    .status(StatusCodes.INTERNAL_SERVER_ERROR)
-    .json({
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       msg: " Unable to update profile ",
-      status: StatusCodes.INTERNAL_SERVER_ERROR
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
     });
   }
-}
- 
+};
