@@ -180,7 +180,7 @@ export const googleRegistration = async (req, res) => {
 };
 
 // Image Uploading
-export const uploadeProfilePicture = async (req, res) => {
+export const uploadProfilePicture = async (req, res) => {
   try {
     const UserId = req.headers.id;
 

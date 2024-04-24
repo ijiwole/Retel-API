@@ -4,7 +4,7 @@ import {
     resendOtp, 
     forgetPassword, 
     googleRegistration, 
-    uploadeProfilePicture,
+    uploadProfilePicture,
     emailverificaton, 
     changePassword, 
     login, 
@@ -22,7 +22,7 @@ const userRouter = express.Router()
 
 userRouter.route("/create").post(register)
 userRouter.route("/google").post(googleRegistration)
-userRouter.route("/upload").post(protect_user, uploadeProfilePicture)
+userRouter.route("/upload").post(protect_user, uploadProfilePicture)
 userRouter.route("/verify").post(emailverificaton)
 userRouter.route("/resend").post(resendOtp)
 userRouter.route("/forget").post(forgetPassword)
