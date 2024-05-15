@@ -387,7 +387,7 @@ export const login = async (req, res) => {
 
       if (isMatch) {
         return res.status(StatusCodes.OK).json({
-          msg: "logins success",
+          msg: "login successful",
           token: generateToken(user.id),
           status: StatusCodes.OK,
         });
@@ -512,4 +512,21 @@ export const editProfile = async (req, res) => {
       status: StatusCodes.INTERNAL_SERVER_ERROR,
     });
   }
+};
+
+export const deleteProfile = async (req, res) => {
+  const id = req.headers.id;
+
+  const owner = await UserSchema.findByIdAndDelete(id);
+
+  if (!owner) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ error: "User not found" });
+  }
+
+  return res.status(StatusCodes.OK).json({
+    msg: "Profile Successfully deleted",
+    status: StatusCodes.OK,
+  });
 };

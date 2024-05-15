@@ -13,6 +13,7 @@ import {
     myProfile,
     upload,
     editProfile,
+    deleteProfile
 }from "../controller/user.js"
 import {protect_user} from "../middleware/protectUser.js"
 
@@ -26,11 +27,12 @@ userRouter.route("/upload").post(protect_user, uploadProfilePicture)
 userRouter.route("/verify").post(emailverificaton)
 userRouter.route("/resend").post(resendOtp)
 userRouter.route("/forget").post(forgetPassword)
-userRouter.route("/change").post(changePassword)
+userRouter.route("/change-password").post(changePassword)
 userRouter.route("/login").post(login)
 userRouter.route("/google_login").post(googleLogin)
 userRouter.route("/logout").post(logout)
-userRouter.route("/myprofile").get(protect_user, myProfile)
+userRouter.route("/my-profile").get(protect_user, myProfile)
+userRouter.route("/delete-profile").post(protect_user, deleteProfile)
 userRouter.route("/edit-profile", upload.single("image")).post(protect_user, editProfile)
 
 export default userRouter 
