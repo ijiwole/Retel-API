@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 
-const orderSchema = new mongoose.Schema({
+const OrderSchema = new mongoose.Schema({
     products: {
         type: [
             {
@@ -40,14 +40,24 @@ const orderSchema = new mongoose.Schema({
 
     coupon: {
         type: String,
+        transactionId: String,
+    },
+
+    status: {
+        type: String,
         enum: ["ORDERED", "SHIPPED", "DELIVERED", "CANCELLED"],
         default: "ORDERED"
     },
-
+    
     paymentMode: {
         type: String,
         enum: ["CARD", "TRANSFER", "POS"],
         required: true
-    }
+    },
+    
 
+},{
+    timestamps: true
 })
+
+export default mongoose.model("Order", OrderSchema)

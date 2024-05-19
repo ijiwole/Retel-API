@@ -370,7 +370,7 @@ export const login = async (req, res) => {
       });
     }
     //compare password
-    bcyrpt.compare(password, user.password, (err, isMatch) => {
+     bcyrpt.compare(password, user.password, (err, isMatch) => {
       if (err) {
         console.log(err);
         return res
@@ -492,7 +492,7 @@ export const editProfile = async (req, res) => {
     }
     owner.name = req.body.name ?? owner.name;
     owner.email = req.body.email ?? owner.email;
-    owner.password = req.body.password ?? owner.password;
+    //owner.password = req.body.password ?? owner.password;
 
     if (req.file) {
       owner.img.url = req.file.path;

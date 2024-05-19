@@ -40,11 +40,10 @@ export const createCoupon = async(req, res)=> {
         })
     } catch (err) {
         console.log(err);
-        next(err)
-        // return res.status(StatusCodes.INSUFFICIENT_STORAGE).json({
-        //     msg: "Unable to create coupon",
-        //     status: StatusCodes.INTERNAL_SERVER_ERROR
-        // });
+        return res.status(StatusCodes.INSUFFICIENT_STORAGE).json({
+            msg: "Unable to create coupon",
+            status: StatusCodes.INTERNAL_SERVER_ERROR
+        });
     }
 };
 
