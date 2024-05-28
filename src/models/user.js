@@ -14,9 +14,7 @@ const UserSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: [true, "Password is required"],
-        minLenght: [8, "Password must be at least 8 characters"],
-        select: false // This does not return the user password whenever you want to generate user
+        required: [true, "Password is required"]
     },
     otp:{
         type: String,

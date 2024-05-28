@@ -85,7 +85,7 @@ export const register = async (req, res) => {
               sendMail(
                 savedUser.email,
                 "Retel Verification Email",
-                `Please use the otp below to verify your email address ${otp}, Note: please don't share this otp if you did not authorize account creation on Rete.`
+                `<p>Please use the otp below to verify your email address ${otp}, Note: please don't share this otp if you did not authorize account creation on Rete.</p>`
               );
               res.status(StatusCodes.CREATED).json({
                 userId: savedUser._id,
@@ -353,11 +353,11 @@ export const login = async (req, res) => {
     }
     validateEmail(res, email);
 
-    const user = await UserSchema.findOne({ email }).select("+password");
+    const user = await UserSchema.findOne({ email : email})
 
     if (!user) {
       return res.status(StatusCodes.BAD_REQUEST).json({
-        msg: "email provided not registered on retel",
+        msg: "user not registered on retel",
         status: StatusCodes.BAD_REQUEST,
       });
     }
@@ -369,6 +369,7 @@ export const login = async (req, res) => {
         status: StatusCodes.OK,
       });
     }
+    
     //compare password
      bcyrpt.compare(password, user.password, (err, isMatch) => {
       if (err) {
@@ -402,7 +403,7 @@ export const login = async (req, res) => {
   } catch (err) {
     console.log(err);
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      msg: err.msg,
+      msg: err.message,
       status: StatusCodes.INTERNAL_SERVER_ERROR,
     });
   }
