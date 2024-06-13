@@ -121,19 +121,6 @@ export const googleRegistration = async (req, res) => {
         .json({ msg: "Input your email", status: StatusCodes.BAD_REQUEST });
     }
 
-    // if (!req.body.role) {
-    //   return res
-    //     .status(StatusCodes.BAD_REQUEST)
-    //     .json({ msg: "Input your email", status: StatusCodes.BAD_REQUEST });
-    // }
-    // // validate roles
-    // if (!Object.values(AuthRoles).includes(role)) {
-    //   return res.status(StatusCodes.BAD_REQUEST).json({
-    //     msg: "Invalid user role",
-    //     status: StatusCodes.BAD_REQUEST,
-    //   });
-    // }
-
     const otp = `${Math.floor(1000 + Math.random() * 9000)}`;
 
     UserSchema.findOne({ email: req.body.email }).then((existingUser) => {
@@ -369,7 +356,6 @@ export const login = async (req, res) => {
         status: StatusCodes.OK,
       });
     }
-    
     //compare password
      bcyrpt.compare(password, user.password, (err, isMatch) => {
       if (err) {
